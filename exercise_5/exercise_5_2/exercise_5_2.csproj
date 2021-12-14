@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A928D5D6-C9DE-4736-8500-8FE6D77DEDCC}</ProjectGuid>
+    <ProjectGuid>{415EF267-3914-4CCA-8A6A-CC7763472C50}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>exercise_4_1</RootNamespace>
-    <AssemblyName>exercise_4_1</AssemblyName>
+    <RootNamespace>exercise_5_2</RootNamespace>
+    <AssemblyName>exercise_5_2</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -48,6 +48,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\exercise_5_1\exercise_5_1.csproj">
+      <Project>{7b1d7d3f-b2af-4609-95f4-513ff9bf3da0}</Project>
+      <Name>exercise_5_1</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
