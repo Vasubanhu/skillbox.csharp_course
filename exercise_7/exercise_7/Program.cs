@@ -32,7 +32,27 @@ namespace exercise_7
                     WriteLine("Данные о сотрудниках.");
                     Clear();
                     WriteLine($"{_dashPattern}\n{_headerPattern}\n{ _dashPattern}");
-                    OutputData(ReadData(_fileName));
+                    List<Employee> data = ReadData(_fileName);
+                    OutputData(data);
+
+                    WriteLine("\nСортировка по возрастанию - 1");
+                    WriteLine("Сортировка по убыванию - 2");
+                    action = ReadLine();
+
+                    switch (action)
+                    {
+                        case "1":
+                            Clear();
+                            WriteLine($"{_dashPattern}\n{_headerPattern}\n{ _dashPattern}");
+                            OutputData(OrderEntriesByAscending(data));
+                            break;
+                        case "2":
+                            Clear();
+                            WriteLine($"{_dashPattern}\n{_headerPattern}\n{ _dashPattern}");
+                            OutputData(OrderEntriesByDescending(data));
+                            break;
+                    }
+
                     break;
                 case "2":
                     Clear();
@@ -40,10 +60,11 @@ namespace exercise_7
                     _id = ReadLine();// метод
                     Clear();
                     WriteLine($"{_dashPattern}\n{_headerPattern}\n{ _dashPattern}");
-                    WriteLine(GetEntry(_id, _fileName));
+                    WriteLine(GetEntryByID(_id, _fileName));
                     break;
                 case "3":
                     Clear();
+                    Write("Введите данные сотрудника.\n-------------------------");
                     WriteData(ConvertEntry(CreateEntry(InputData())));
                     break;
                 case "4":
@@ -56,7 +77,7 @@ namespace exercise_7
                     Clear();
                     Write("Редактирование записи. Введите id записи: ");
                     _id = ReadLine();// метод
-                    EditEntry();
+                    EditEntry(_id, _fileName);
                     break;
                 default:
                     WriteLine("Некорректный номер операции.");
@@ -69,13 +90,13 @@ namespace exercise_7
 
         #region Methods
         /// <summary>
-        /// Читает данные из файла
+        /// Чтение данных из файла
         /// </summary>
         /// <param name="fileName">имя файла</param>
         /// <returns>коллекция строк</returns>
-        private static List<string> ReadData(string fileName)
+        private static List<Employee> ReadData(string fileName)
         {
-            List<string> list = new List<string>();
+            List<Employee> list = new List<Employee>();
 
             if (File.Exists(fileName))
             {
@@ -83,7 +104,7 @@ namespace exercise_7
                 {
                     while (streamReader.Peek() >= 0)
                     {
-                        list.Add(streamReader.ReadLine());
+                        list.Add(GetEntry(streamReader.ReadLine()));
                     }
                 }
             }
@@ -96,17 +117,20 @@ namespace exercise_7
             return list;
         }
         /// <summary>
-        /// Выводит данные в консоль
+        /// Вывод данных в консоль
         /// </summary>
         /// <param name="list">коллекция строк</param>
-        private static void OutputData(List<string> list)
+        private static void OutputData(List<Employee> list)
         {
-            foreach (string item in list)
+            foreach (Employee item in list)
             {
-                WriteLine(Trim(item));      
+                WriteLine(Trim(ConvertEntry(item)));
             }
         }
-
+        /// <summary>
+        /// Ввод данных
+        /// </summary>
+        /// <returns>строка</returns>
         private static string InputData()
         {
             string entry = String.Empty;
@@ -114,7 +138,7 @@ namespace exercise_7
             string id = GenerateID();
 
             entry += id + _separator;
-            Write($"Введите данные сотрудника.\n-------------------------\nID: {id}\n");
+            Write($"\nID: {id}\n");
 
             timeStamp = DateTime.Now.ToString(_dateTimePattern);
             Write($"Дата и время добавления записи: {timeStamp}\n");
@@ -137,7 +161,10 @@ namespace exercise_7
 
             return entry;
         }
-
+        /// <summary>
+        /// Запись данных в файл
+        /// </summary>
+        /// <param name="data">строка</param>
         private static void WriteData(string data)
         {
             if (File.Exists(_fileName))
@@ -156,8 +183,11 @@ namespace exercise_7
                 }
             }
         }
-
-        private static string GenerateID() => string.Format($"{Guid.NewGuid():N}");// ?
+        /// <summary>
+        /// Генерация id
+        /// </summary>
+        /// <returns>строка</returns>
+        private static string GenerateID() => string.Format($"{Guid.NewGuid():N}");
         #endregion
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using static System.Console;
@@ -10,12 +11,12 @@ namespace exercise_7
         #region Fields
 
         private string _id;
-        private string _timeStamp { get; set; }
-        private string _fullName { get; set; }
-        private int _age { get; set; }
-        private int _height { get; set; }
-        private string _birthday { get; set; }
-        public string _birthplace { get; set; }
+        private string _timeStamp;
+        private string _fullName;
+        private int _age;
+        private int _height;
+        private string _birthday;
+        public string _birthplace;
 
         #endregion
         #region Properties
@@ -42,15 +43,36 @@ namespace exercise_7
             _birthplace = birthplace;
         }
 
+        public Employee(string id, string timeStamp, string fullName, int age, int height, string birthday, string birthplace)
+        {
+            _id = id;
+            _timeStamp = timeStamp;
+            _fullName = fullName;
+            _age = age;
+            _height = height;
+            _birthday = birthday;
+            _birthplace = birthplace;
+        }
+
         #endregion
         #region Methods
+        /// <summary>
+        /// Форматирование строки по разделителю
+        /// </summary>
+        /// <param name="text">строка</param>
+        /// <returns>строка</returns>
         public static string Trim(string text)
         {
             string[] words = text.Split('#');
             return string.Join(" ", words);
         }
-
-        public static string GetEntry(string id, string fileName)
+        /// <summary>
+        /// Получение записи по id
+        /// </summary>
+        /// <param name="id">строка</param>
+        /// <param name="fileName">строка</param>
+        /// <returns></returns>
+        public static string GetEntryByID(string id, string fileName)
         {
             if (File.Exists(fileName))
             {
@@ -72,24 +94,47 @@ namespace exercise_7
 
             return null;
         }
-
+        /// <summary>
+        /// Создание записи
+        /// </summary>
+        /// <param name="data">строка</param>
+        /// <returns>Employee</returns>
         public static Employee CreateEntry(string data)
         {
             string[] array = data.Split('#');
             Employee employee = new Employee(array[2], int.Parse(array[3]), int.Parse(array[4]), array[5], array[6]);
             return employee;
         }
-
+        /// <summary>
+        /// Чтение записи
+        /// </summary>
+        /// <param name="line">строка</param>
+        /// <returns>Employee</returns>
+        public static Employee GetEntry(string line)
+        {
+            string[] array = line.Split('#');
+            Employee employee = new Employee(array[0], array[1], array[2], int.Parse(array[3]), int.Parse(array[4]), array[5], array[6]);
+            return employee;
+        }
+        /// <summary>
+        /// Конвертирование записи
+        /// </summary>
+        /// <param name="employee">Employee</param>
+        /// <returns>строка</returns>
         public static string ConvertEntry(Employee employee)
         {
             return $"{employee.ID}#{employee.TimeStamp}#{employee.FullName}#{employee.Age}#{employee.Height}#{employee.Birthday}#{employee.Birthplace}";
         }
-
+        /// <summary>
+        /// Удаление записи
+        /// </summary>
+        /// <param name="id">строка</param>
+        /// <param name="fileName">строка</param>
         public static void RemoveEntry(string id, string fileName)
         {
             if (File.Exists(fileName))
             {
-                string lineToRemove = GetEntry(id, fileName);
+                string lineToRemove = GetEntryByID(id, fileName);
                 File.WriteAllLines(fileName, File.ReadLines(fileName).Where(line => line != lineToRemove).ToList());
             }
             
@@ -98,10 +143,59 @@ namespace exercise_7
                 WriteLine("Файл не найден.");
             }
         }
-
-        public static void EditEntry()
+        /// <summary>
+        /// Сортировка по возрастанию(дата)
+        /// </summary>
+        /// <param name="list">коллекция Employee</param>
+        /// <returns>коллекция Employee</returns>
+        public static List<Employee> OrderEntriesByAscending(List<Employee> list)
         {
-            //
+            List<Employee> employees = new List<Employee>();
+
+            var queryEntries = from entry in list orderby entry.TimeStamp select entry;
+
+            foreach (var entry in queryEntries)
+            {
+                employees.Add(entry);
+            }
+
+            return employees;
+        }
+        /// <summary>
+        /// Сортировка по убыванию(дата)
+        /// </summary>
+        /// <param name="list">коллекция Employee</param>
+        /// <returns>коллекция Employee</returns>
+        public static List<Employee> OrderEntriesByDescending(List<Employee> list)
+        {
+            List<Employee> employees = new List<Employee>();
+
+            var queryEntries = from entry in list orderby entry.TimeStamp descending select entry;
+
+            foreach (var entry in queryEntries)
+            {
+                employees.Add(entry);
+            }
+
+            return employees;
+        }
+
+        public static void EditEntry(string id, string fileName)
+        {
+            if (File.Exists(fileName))
+            {
+
+            }
+
+            else
+            {
+                WriteLine("Файл не найден.");
+            }
+        }
+
+        public static void ReadEntriesRange(string fileName)
+        {
+
         }
 
         #endregion
