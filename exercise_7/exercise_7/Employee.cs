@@ -95,15 +95,22 @@ namespace exercise_7
             return null;
         }
         /// <summary>
+        /// Получение записи по id
+        /// </summary>
+        /// <param name="id">строка</param>
+        /// <param name="list">коллекция Employee</param>
+        /// <returns>строка</returns>
+        public static Employee GetEntryByID(string id, List<Employee> list) => list.Single(s => s.ID == id);
+        /// <summary>
         /// Создание записи
         /// </summary>
         /// <param name="data">строка</param>
         /// <returns>Employee</returns>
-        public static Employee CreateEntry(string data)
+        public static string CreateEntry(string data)
         {
             string[] array = data.Split('#');
             Employee employee = new Employee(array[2], int.Parse(array[3]), int.Parse(array[4]), array[5], array[6]);
-            return employee;
+            return ConvertEntry(employee);
         }
         /// <summary>
         /// Чтение записи
@@ -148,55 +155,53 @@ namespace exercise_7
         /// </summary>
         /// <param name="list">коллекция Employee</param>
         /// <returns>коллекция Employee</returns>
-        public static List<Employee> OrderEntriesByAscending(List<Employee> list)
-        {
-            List<Employee> employees = new List<Employee>();
-
-            var queryEntries = from entry in list orderby entry.TimeStamp select entry;
-
-            foreach (var entry in queryEntries)
-            {
-                employees.Add(entry);
-            }
-
-            return employees;
-        }
+        public static List<Employee> OrderEntriesByAscending(List<Employee> list) => list.OrderBy(entry => entry.TimeStamp).ToList();
         /// <summary>
         /// Сортировка по убыванию(дата)
         /// </summary>
         /// <param name="list">коллекция Employee</param>
         /// <returns>коллекция Employee</returns>
-        public static List<Employee> OrderEntriesByDescending(List<Employee> list)
+        public static List<Employee> OrderEntriesByDescending(List<Employee> list) => list.OrderByDescending(entry => entry.TimeStamp).ToList();
+        /// <summary>
+        /// Генерация id
+        /// </summary>
+        /// <returns>строка</returns>
+        public static string GenerateID() => Guid.NewGuid().ToString("N");
+        /// <summary>
+        /// Редактирование записи
+        /// </summary>
+        /// <param name="id">строка</param>
+        /// <param name="list">коллекция Employee</param>
+        /// <param name="fileName">строка</param>
+        public static void EditEntry(string id, List<Employee> list, string fileName)
         {
-            List<Employee> employees = new List<Employee>();
+            Employee entry = GetEntryByID(id, list);
+            Employee newEntry = GetEntry(Program.InputData());
+            int index = list.IndexOf(entry);
 
-            var queryEntries = from entry in list orderby entry.TimeStamp descending select entry;
+            list.Remove(entry);
+            entry = newEntry;
+            list.Insert(index, entry);
 
-            foreach (var entry in queryEntries)
+            string[] array = new string[list.Count];
+
+            for (int i = 0; i < list.Count; i++)
             {
-                employees.Add(entry);
+                array[i] = ConvertEntry(list[i]);
             }
 
-            return employees;
+            File.WriteAllLines(fileName, array);
         }
-
-        public static void EditEntry(string id, string fileName)
-        {
-            if (File.Exists(fileName))
-            {
-
-            }
-
-            else
-            {
-                WriteLine("Файл не найден.");
-            }
-        }
-
-        public static void ReadEntriesRange(string fileName)
-        {
-
-        }
+        /// <summary>
+        /// Выбор диапазона дат
+        /// </summary>
+        /// <param name="start">строка</param>
+        /// <param name="end">строка</param>
+        /// <param name="list">коллекция Employee</param>
+        /// <returns></returns>
+        public static List<Employee> SelectInRange(string start, string end, List<Employee> list) => list
+                                    .Where(entry => DateTime.Parse(entry.TimeStamp) >= DateTime.Parse(start) && 
+                                                            DateTime.Parse(entry.TimeStamp) <= DateTime.Parse(end)).ToList();
 
         #endregion
     }

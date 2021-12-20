@@ -20,9 +20,11 @@ namespace exercise_7
             WriteLine("Введите номер операции и нажмите Enter.\n" + "\n" +
                       "* Просмотр всех записей - 1;\n" +
                       "* Просмотр записи по ID сотрудника - 2;\n" +
-                      "* Добавление записи - 3.\n" +
-                      "* Удаление записи - 4.");
+                      "* Добавление записи - 3\n" +
+                      "* Удаление записи - 4\n" +
+                      "* Редактирование записи - 5");
 
+            List<Employee> data = ReadData(_fileName);//
             string action = ReadLine();
 
             switch (action)
@@ -32,11 +34,12 @@ namespace exercise_7
                     WriteLine("Данные о сотрудниках.");
                     Clear();
                     WriteLine($"{_dashPattern}\n{_headerPattern}\n{ _dashPattern}");
-                    List<Employee> data = ReadData(_fileName);
-                    OutputData(data);
+                    OutputData(data);//
 
                     WriteLine("\nСортировка по возрастанию - 1");
                     WriteLine("Сортировка по убыванию - 2");
+                    WriteLine("Записи в диапазоне дат - 3");
+
                     action = ReadLine();
 
                     switch (action)
@@ -44,12 +47,23 @@ namespace exercise_7
                         case "1":
                             Clear();
                             WriteLine($"{_dashPattern}\n{_headerPattern}\n{ _dashPattern}");
-                            OutputData(OrderEntriesByAscending(data));
+                            OutputData(OrderEntriesByAscending(data));//
                             break;
                         case "2":
                             Clear();
                             WriteLine($"{_dashPattern}\n{_headerPattern}\n{ _dashPattern}");
-                            OutputData(OrderEntriesByDescending(data));
+                            OutputData(OrderEntriesByDescending(data));//
+                            break;
+                        case "3":
+                            Clear();
+                            WriteLine("Формат даты - дд.мм.гг чч:мм.");
+                            Write("Введите начальную дату: ");
+                            string start = ReadLine();
+                            Write("Введите конечную дату: ");
+                            string end = ReadLine();
+                            Clear();
+                            WriteLine($"{_dashPattern}\n{_headerPattern}\n{ _dashPattern}");
+                            OutputData(SelectInRange(start, end, data));
                             break;
                     }
 
@@ -60,24 +74,26 @@ namespace exercise_7
                     _id = ReadLine();// метод
                     Clear();
                     WriteLine($"{_dashPattern}\n{_headerPattern}\n{ _dashPattern}");
-                    WriteLine(GetEntryByID(_id, _fileName));
+                    WriteLine(ConvertEntry(GetEntryByID(_id, data)));//
                     break;
                 case "3":
                     Clear();
                     Write("Введите данные сотрудника.\n-------------------------");
-                    WriteData(ConvertEntry(CreateEntry(InputData())));
+                    string inputData = InputData();//
+                    string entry = CreateEntry(inputData);//
+                    WriteData(entry);//
                     break;
                 case "4":
                     Clear();
                     Write("Удаление записи. Введите id записи: ");
                     _id = ReadLine();// метод
-                    RemoveEntry(_id, _fileName);
+                    RemoveEntry(_id, _fileName);//
                     break;
                 case "5":
                     Clear();
                     Write("Редактирование записи. Введите id записи: ");
                     _id = ReadLine();// метод
-                    EditEntry(_id, _fileName);
+                    EditEntry(_id, data, _fileName);//
                     break;
                 default:
                     WriteLine("Некорректный номер операции.");
@@ -90,48 +106,10 @@ namespace exercise_7
 
         #region Methods
         /// <summary>
-        /// Чтение данных из файла
-        /// </summary>
-        /// <param name="fileName">имя файла</param>
-        /// <returns>коллекция строк</returns>
-        private static List<Employee> ReadData(string fileName)
-        {
-            List<Employee> list = new List<Employee>();
-
-            if (File.Exists(fileName))
-            {
-                using (StreamReader streamReader = new StreamReader(fileName))
-                {
-                    while (streamReader.Peek() >= 0)
-                    {
-                        list.Add(GetEntry(streamReader.ReadLine()));
-                    }
-                }
-            }
-
-            else
-            {
-                WriteLine("Файл не найден.");
-            }
-
-            return list;
-        }
-        /// <summary>
-        /// Вывод данных в консоль
-        /// </summary>
-        /// <param name="list">коллекция строк</param>
-        private static void OutputData(List<Employee> list)
-        {
-            foreach (Employee item in list)
-            {
-                WriteLine(Trim(ConvertEntry(item)));
-            }
-        }
-        /// <summary>
         /// Ввод данных
         /// </summary>
         /// <returns>строка</returns>
-        private static string InputData()
+        public static string InputData()
         {
             string entry = String.Empty;
             string timeStamp;
@@ -162,6 +140,33 @@ namespace exercise_7
             return entry;
         }
         /// <summary>
+        /// Чтение данных из файла
+        /// </summary>
+        /// <param name="fileName">имя файла</param>
+        /// <returns>коллекция строк</returns>
+        private static List<Employee> ReadData(string fileName)
+        {
+            List<Employee> list = new List<Employee>();
+
+            if (File.Exists(fileName))
+            {
+                using (StreamReader streamReader = new StreamReader(fileName))
+                {
+                    while (streamReader.Peek() >= 0)
+                    {
+                        list.Add(GetEntry(streamReader.ReadLine()));
+                    }
+                }
+            }
+
+            else
+            {
+                WriteLine("Файл не найден.");
+            }
+
+            return list;
+        }
+        /// <summary>
         /// Запись данных в файл
         /// </summary>
         /// <param name="data">строка</param>
@@ -184,10 +189,17 @@ namespace exercise_7
             }
         }
         /// <summary>
-        /// Генерация id
+        /// Вывод данных в консоль
         /// </summary>
-        /// <returns>строка</returns>
-        private static string GenerateID() => string.Format($"{Guid.NewGuid():N}");
+        /// <param name="list">коллекция строк</param>
+        private static void OutputData(List<Employee> list)
+        {
+            foreach (Employee item in list)
+            {
+                WriteLine(Trim(ConvertEntry(item)));
+            }
+        }
+
         #endregion
     }
 }
