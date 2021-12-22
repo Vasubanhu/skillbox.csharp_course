@@ -12,9 +12,16 @@ namespace exercise_8_2
 
         private static void Main(string[] args)
         {
+            InputData();
+            GetData();
+
+            ReadKey();
+        }
+
+        private static void InputData()
+        {
             while (true)
             {
-                // Input
                 Clear();
                 Write("Введите номер телефона: ");
                 _phoneNumber = ReadLine();
@@ -25,17 +32,14 @@ namespace exercise_8_2
                 if (string.IsNullOrEmpty(_fullName))
                     break;
 
-                try
-                {
-                    _dictionary.Add(_phoneNumber, _fullName);
-                }
-                catch (Exception e)
-                {
-                    WriteLine(e);
-                    throw;
-                }
+                AddData(_phoneNumber, _fullName);
             }
+        }
 
+        private static void AddData(string key, string value) => _dictionary.Add(_phoneNumber, _fullName);
+
+        private static void GetData()
+        {
             Clear();
             Write("Введите номер телефона для поиска владельца: ");
             _phoneNumber = ReadLine();
@@ -51,8 +55,6 @@ namespace exercise_8_2
             {
                 WriteLine($"\nПо номеру телефона - {_phoneNumber} владелец не найден.");
             }
-
-            ReadKey();
         }
     }
 }
