@@ -14,33 +14,8 @@ namespace Telegram_bot
 {
     internal class Handlers
     {
-        /// <summary>
-        /// Handles errors
-        /// </summary>
-        /// <param name="botClient"></param>
-        /// <param name="exception"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
-        {
-            string errorMessage = exception switch
-            {
-                ApiRequestException apiRequestException
-                    => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
-                _ => exception.ToString() // _ - переменная-заполнитель https://docs.microsoft.com/en-us/dotnet/csharp/fundamentals/functional/discards
-            };
-
-            WriteLine(errorMessage);
-            return Task.CompletedTask;
-        }
-        /// <summary>
-        /// Handles messages
-        /// </summary>
-        /// <param name="botClient"></param>
-        /// <param name="update"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        // Handles messages
+        async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
             // Only process Message updates: https://core.telegram.org/bots/api#message
             if (update.Type != UpdateType.Message)
@@ -124,6 +99,19 @@ namespace Telegram_bot
                 text: "Выбирите пункт меню",
                 replyMarkup: inlineKeyboard,
                 cancellationToken: cancellationToken);
+        }
+        // Handles error
+        public static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+        {
+            string errorMessage = exception switch
+            {
+                ApiRequestException apiRequestException
+                    => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
+                _ => exception.ToString() // _ - переменная-заполнитель https://docs.microsoft.com/en-us/dotnet/csharp/fundamentals/functional/discards
+            };
+
+            WriteLine(errorMessage);
+            return Task.CompletedTask;
         }
     }
 }
