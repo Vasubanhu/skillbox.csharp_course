@@ -1,36 +1,34 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using static System.Console;
+using Newtonsoft.Json;
 using Telegram.Bot;
-using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.InlineQueryResults;
-using Telegram.Bot.Types.InputFiles;
-using Telegram.Bot.Types.ReplyMarkups;
+using static System.Console;
 
 namespace Telegram_bot
 {
     internal class Handlers
     {
-        // Handles messages
-        async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        public static ITelegramBotClient Bot { get; } = new TelegramBotClient(Configuration.Token);
+
+        public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
-            // Only process Message updates: https://core.telegram.org/bots/api#message
-            if (update.Type != UpdateType.Message)
-                return;
-            // Only process text messages
-            if (update.Message!.Type != MessageType.Text)// ! - оператор допускающий значение null https://docs.microsoft.com/ru-ru/dotnet/csharp/language-reference/operators/null-forgiving
-                return;
+            WriteLine(JsonConvert.SerializeObject(update));
 
-            long chatId = update.Message.Chat.Id;
-            var messageText = update.Message.Text;
+            if (update.Type == UpdateType.Message)
+            {
+                var message = update.Message;
 
-            Message sentMessage = await botClient.SendTextMessageAsync(
-                chatId: chatId,
-                text: "Введите команду /start, чтобы перейти в меню:\n" + messageText,
-                cancellationToken: cancellationToken);
+                if (message?.Text!.ToLower() == "/start")
+                {
+                    await botClient.SendTextMessageAsync(message.Chat, "Добро пожаловать на борт, добрый путник!", cancellationToken: cancellationToken);
+                    return;
+                }
+
+                await botClient.SendTextMessageAsync(message?.Chat!, "Привет-привет!!", cancellationToken: cancellationToken);
+            }
 
             //// #1 Echo received message text 
             //Message sentMessage = await botClient.SendTextMessageAsync(
@@ -83,34 +81,21 @@ namespace Telegram_bot
             //    cancellationToken: cancellationToken);
 
             // Основное меню
-            InlineKeyboardMarkup inlineKeyboard = new(new[]
-            {
-                    // first row
-                    new []
-                    {
-                        InlineKeyboardButton.WithCallbackData(text: "Изображение", callbackData: "1"),
-                        InlineKeyboardButton.WithCallbackData(text: "Аудиозапись", callbackData: "2"),
-                        InlineKeyboardButton.WithCallbackData(text: "Документ", callbackData: "3"),
-                    },
-                });
-
-            sentMessage = await botClient.SendTextMessageAsync(
-                chatId: chatId,
-                text: "Выбирите пункт меню",
-                replyMarkup: inlineKeyboard,
-                cancellationToken: cancellationToken);
+            //InlineKeyboardMarkup inlineKeyboard = new(new[]
+            //{
+            //        // first row
+            //        new []
+            //        {
+            //            InlineKeyboardButton.WithCallbackData(text: "Изображение", callbackData: "1"),
+            //            InlineKeyboardButton.WithCallbackData(text: "Аудиозапись", callbackData: "2"),
+            //            InlineKeyboardButton.WithCallbackData(text: "Документ", callbackData: "3"),
+            //        },
+            //});
         }
-        // Handles error
+
         public static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
-            string errorMessage = exception switch
-            {
-                ApiRequestException apiRequestException
-                    => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
-                _ => exception.ToString() // _ - переменная-заполнитель https://docs.microsoft.com/en-us/dotnet/csharp/fundamentals/functional/discards
-            };
-
-            WriteLine(errorMessage);
+            WriteLine(JsonConvert.SerializeObject(exception));
             return Task.CompletedTask;
         }
     }

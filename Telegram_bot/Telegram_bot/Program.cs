@@ -1,38 +1,29 @@
 ﻿using System.Threading;
-using System.Threading.Tasks;
-using static System.Console;
 using Telegram.Bot;
 using Telegram.Bot.Extensions.Polling;
-using Telegram.Bot.Types;
+using static System.Console;
+using static Telegram_bot.Handlers;
 
 namespace Telegram_bot
 {
     internal class Program
     {
-        private static TelegramBotClient _botClient;
-
-        private static async Task Main(string[] args)
+        private static void Main()
         {
-            _botClient = new TelegramBotClient(Configuration.Token);
+            WriteLine("Запущен бот " + Bot.GetMeAsync().Result.FirstName);
 
-            // Test connection
-            User user = await _botClient.GetMeAsync();
-            Title = user.Username ?? "My awesome Bot";
+            var cts = new CancellationTokenSource();
+            var cancellationToken = cts.Token;
+            var receiverOptions = new ReceiverOptions(); // receive all update types
 
-            using CancellationTokenSource cts = new CancellationTokenSource();
+            Bot.StartReceiving(
+                HandleUpdateAsync,
+                HandleErrorAsync,
+                receiverOptions,
+                cancellationToken
+            );
 
-            // StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
-            ReceiverOptions receiverOptions = new ReceiverOptions { AllowedUpdates = { } }; // receive all update types
-            _botClient.StartReceiving(Handlers.HandleUpdateAsync, 
-                                      Handlers.HandleErrorAsync, 
-                                      receiverOptions, 
-                                      cancellationToken: cts.Token);
-
-            WriteLine($"Start listening for @{user.Username}");
-            ReadKey();
-
-            // Send cancellation request to stop bot
-            cts.Cancel();
+            ReadLine();
         }
     }
 }
