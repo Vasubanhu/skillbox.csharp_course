@@ -2,7 +2,7 @@
 using Telegram.Bot;
 using Telegram.Bot.Extensions.Polling;
 using static System.Console;
-using static Telegram_bot.Handlers;
+using static Telegram_bot.MessageHandler;
 
 namespace Telegram_bot
 {
@@ -10,20 +10,18 @@ namespace Telegram_bot
     {
         private static void Main()
         {
-            WriteLine("Запущен бот " + Bot.GetMeAsync().Result.FirstName);
+            using var cts = new CancellationTokenSource();
 
-            var cts = new CancellationTokenSource();
-            var cancellationToken = cts.Token;
-            var receiverOptions = new ReceiverOptions(); // receive all update types
+            Bot.StartReceiving(HandleUpdateAsync,
+                               HandleErrorAsync,
+                               new ReceiverOptions(),
+                               cts.Token);
 
-            Bot.StartReceiving(
-                HandleUpdateAsync,
-                HandleErrorAsync,
-                receiverOptions,
-                cancellationToken
-            );
+            WriteLine($"{Bot.GetMeAsync(cts.Token).Result.FirstName}Bot was launched.\n");
 
             ReadLine();
+
+            cts.Cancel();
         }
     }
 }
