@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -15,9 +18,10 @@ namespace Telegram_bot
 {
     internal class MessageHandler
     {
-        public static ITelegramBotClient Bot { get; } = new TelegramBotClient(Configuration.Token);
+        internal static ITelegramBotClient Bot { get; } = new TelegramBotClient(Configuration.Token);
 
-        public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        internal static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
+            CancellationToken cancellationToken)
         {
             WriteLine(JsonConvert.SerializeObject(update));
 
@@ -48,9 +52,9 @@ namespace Telegram_bot
             {
                 inputOnlineFile = new InputOnlineFile("https://www.freecatphotoapp.com/your-image.jpg");
                 await botClient.SendPhotoAsync(callbackQuery.Message!.Chat.Id,
-                                                 inputOnlineFile,
-                                          "<b>Cat</b>. <i>Source</i>: <a href=\"https://www.freecatphotoapp.com\">FreeCodeCamp</a>",
-                                                 ParseMode.Html);
+                    inputOnlineFile,
+                    "<b>Cat</b>. <i>Source</i>: <a href=\"https://www.freecatphotoapp.com\">FreeCodeCamp</a>",
+                    ParseMode.Html);
                 return;
             }
 
@@ -58,13 +62,39 @@ namespace Telegram_bot
             {
                 inputOnlineFile = new InputOnlineFile("https://github.com/TelegramBots/book/raw/master/src/docs/photo-ara.jpg");
                 await botClient.SendDocumentAsync(callbackQuery.Message!.Chat.Id,
-                                                    inputOnlineFile,
-                                                    caption: "<b>Ara bird</b>. <i>Source</i>: <a href=\"https://pixabay.com\">Pixabay</a>",
-                                                    parseMode: ParseMode.Html);
+                    inputOnlineFile,
+                    caption: "<b>Ara bird</b>. <i>Source</i>: <a href=\"https://pixabay.com\">Pixabay</a>",
+                    parseMode: ParseMode.Html);
                 return;
             }
 
-            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, $"You choose with data: {callbackQuery.Data}");
+            if (callbackQuery.Data!.Contains("List"))
+            {
+                var path = @$"C:\Users\{Environment.UserName}\Downloads\Telegram Desktop";
+
+                if (Directory.Exists(path))
+                {
+                    if (Directory.GetFiles(path).Length != 0)
+                    {
+                        await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "List of downloaded files:");
+
+                        foreach (var file in ProcessDirectory(path))
+                        {
+                            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, file);
+                        }
+                        return;
+                    }
+
+                    await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "Directory has not files.");
+                    return;
+                }
+
+                await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, $"{path} is not a valid directory.");
+                return;
+            }
+
+            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id,
+                $"You choose with data: {callbackQuery.Data}");
         }
 
         private static async Task HandleMessage(ITelegramBotClient botClient, Message message)
@@ -72,40 +102,45 @@ namespace Telegram_bot
             switch (message.Text)
             {
                 case "/start":
-                    await botClient.SendTextMessageAsync(message.Chat.Id, "Welcome aboard! Choose commands: /files | /weather");
+                    await botClient.SendTextMessageAsync(message.Chat.Id,
+                        "Welcome aboard! Click to the 'Menu' button to display a list with commands.");
                     return;
                 case "/weather":
                     {
                         InlineKeyboardMarkup inlineKeyboard = new(new[]
                         {
-                            InlineKeyboardButton.WithUrl("Magnitogorsk", "https://www.gismeteo.ru/weather-magnitogorsk-4613/"),
-                            InlineKeyboardButton.WithUrl("Chelyabinsk", "https://www.gismeteo.ru/weather-chelyabinsk-4565/"),
-                            InlineKeyboardButton.WithUrl("Yekaterinburg", "https://www.gismeteo.ru/weather-yekaterinburg-4517/")
+                        InlineKeyboardButton.WithUrl("Magnitogorsk",
+                            "https://www.gismeteo.ru/weather-magnitogorsk-4613/"),
+                        InlineKeyboardButton.WithUrl("Chelyabinsk",
+                            "https://www.gismeteo.ru/weather-chelyabinsk-4565/"),
+                        InlineKeyboardButton.WithUrl("Yekaterinburg",
+                            "https://www.gismeteo.ru/weather-yekaterinburg-4517/")
 
-                        });
+                    });
 
                         await botClient.SendTextMessageAsync(message.Chat.Id,
-                                                           "Choose the city to know the weather:",
-                                                                replyMarkup: inlineKeyboard);
+                            "Choose the city to know the weather:",
+                            replyMarkup: inlineKeyboard);
                         return;
                     }
                 case "/files":
                     {
                         InlineKeyboardMarkup inlineKeyboard = new(new[]
                         {
-                            new[]
-                            {
-                                InlineKeyboardButton.WithCallbackData(text: "Audio", callbackData: "Audio"),
-                                InlineKeyboardButton.WithCallbackData(text: "Image", callbackData: "Image"),
-                                InlineKeyboardButton.WithCallbackData(text: "Document", callbackData: "Document")
-                            },
-                            new[]
-                            {
-                                InlineKeyboardButton.WithCallbackData(text: "Uploaded files", callbackData: "#")
-                            }
-                        });
+                        new[]
+                        {
+                            InlineKeyboardButton.WithCallbackData(text: "Audio", callbackData: "Audio"),
+                            InlineKeyboardButton.WithCallbackData(text: "Image", callbackData: "Image"),
+                            InlineKeyboardButton.WithCallbackData(text: "Document", callbackData: "Document")
+                        },
+                        new[]
+                        {
+                            InlineKeyboardButton.WithCallbackData(text: "List of files", callbackData: "List")
+                        }
+                    });
 
-                        await botClient.SendTextMessageAsync(message.Chat.Id, "Choose a file:", replyMarkup: inlineKeyboard);
+                        await botClient.SendTextMessageAsync(message.Chat.Id, "Choose a file:",
+                            replyMarkup: inlineKeyboard);
                         return;
                     }
             }
@@ -113,7 +148,8 @@ namespace Telegram_bot
             await botClient.SendTextMessageAsync(message.Chat.Id, $"You said: {message.Text}");
         }
 
-        public static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+        internal static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception,
+            CancellationToken cancellationToken)
         {
             var errorMessage = exception switch
             {
@@ -128,5 +164,8 @@ namespace Telegram_bot
 
             return Task.CompletedTask;
         }
+
+        private static List<string> ProcessDirectory(string targetDirectory)
+            => Directory.GetFiles(targetDirectory).Select(Path.GetFileName).ToList();
     }
 }
