@@ -33,11 +33,29 @@ namespace Telegram_bot
 
         private static async Task HandleCallbackQuery(ITelegramBotClient botClient, CallbackQuery callbackQuery)
         {
-            // Method
+            // Wrap in methods
             if (callbackQuery.Data!.Contains("Audio"))
             {
                 await using var stream = System.IO.File.OpenRead("src_docs_voice-nfl_commentary.ogg");
-                await botClient.SendVoiceAsync(callbackQuery.Message!.Chat.Id, voice: stream, duration: 36);
+                await botClient.SendVoiceAsync(callbackQuery.Message!.Chat.Id, stream, duration: 36);
+                return;
+            }
+
+            if (callbackQuery.Data!.Contains("Image"))
+            {
+                await botClient.SendPhotoAsync(callbackQuery.Message!.Chat.Id,
+                                          "https://www.freecatphotoapp.com/your-image.jpg",
+                                          "<b>Cat</b>. <i>Source</i>: <a href=\"https://www.freecatphotoapp.com\">FreeCodeCamp</a>",
+                                                 ParseMode.Html);
+                return;
+            }
+
+            if (callbackQuery.Data!.Contains("Document"))
+            {
+                await botClient.SendDocumentAsync(callbackQuery.Message!.Chat.Id,
+                                          "https://github.com/TelegramBots/book/raw/master/src/docs/photo-ara.jpg",
+                                                    caption: "<b>Ara bird</b>. <i>Source</i>: <a href=\"https://pixabay.com\">Pixabay</a>",
+                                                    parseMode: ParseMode.Html);
                 return;
             }
 
@@ -70,8 +88,8 @@ namespace Telegram_bot
                             new[]
                             {
                                 InlineKeyboardButton.WithCallbackData(text: "Audio", callbackData: "Audio"),
-                                InlineKeyboardButton.WithCallbackData(text: "Image", callbackData: "#"),
-                                InlineKeyboardButton.WithCallbackData(text: "Document", callbackData: "#")
+                                InlineKeyboardButton.WithCallbackData(text: "Image", callbackData: "Image"),
+                                InlineKeyboardButton.WithCallbackData(text: "Document", callbackData: "Document")
                             },
                             new[]
                             {
@@ -86,22 +104,6 @@ namespace Telegram_bot
 
             await botClient.SendTextMessageAsync(message.Chat.Id, $"You said: {message.Text}");
         }
-
-        //#3 Image
-        //Message message = await botClient.SendPhotoAsync(
-        //    chatId: chatId,
-        //    photo: "https://www.freecatphotoapp.com/your-image.jpg",
-        //    caption: "<b>Cat</b>. <i>Source</i>: <a href=\"https://www.freecatphotoapp.com\">FreeCodeCamp</a>",
-        //    parseMode: ParseMode.Html,
-        //    cancellationToken: cancellationToken);
-
-        //// #5 Other documents
-        //message = await botClient.SendDocumentAsync(
-        //    chatId: chatId,
-        //    document: "https://github.com/TelegramBots/book/raw/master/src/docs/photo-ara.jpg",
-        //    caption: "<b>Ara bird</b>. <i>Source</i>: <a href=\"https://pixabay.com\">Pixabay</a>",
-        //    parseMode: ParseMode.Html,
-        //    cancellationToken: cancellationToken);
 
         public static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
