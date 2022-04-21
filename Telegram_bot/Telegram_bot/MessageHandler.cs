@@ -6,8 +6,10 @@ using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
 using static System.Console;
+using File = System.IO.File;
 
 namespace Telegram_bot
 {
@@ -15,8 +17,7 @@ namespace Telegram_bot
     {
         public static ITelegramBotClient Bot { get; } = new TelegramBotClient(Configuration.Token);
 
-        public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
-            CancellationToken cancellationToken)
+        public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
             WriteLine(JsonConvert.SerializeObject(update));
 
@@ -33,18 +34,21 @@ namespace Telegram_bot
 
         private static async Task HandleCallbackQuery(ITelegramBotClient botClient, CallbackQuery callbackQuery)
         {
-            // Wrap in methods
+            InputOnlineFile inputOnlineFile;
+
             if (callbackQuery.Data!.Contains("Audio"))
             {
-                await using var stream = System.IO.File.OpenRead("src_docs_voice-nfl_commentary.ogg");
-                await botClient.SendVoiceAsync(callbackQuery.Message!.Chat.Id, stream, duration: 36);
+                await using var stream = File.OpenRead("src_docs_voice-nfl_commentary.ogg");
+                inputOnlineFile = new InputOnlineFile(stream, $"record-{DateTime.Now:dd.MM.yyyy}.mp3");
+                await botClient.SendDocumentAsync(callbackQuery.Message!.Chat.Id, inputOnlineFile);
                 return;
             }
 
             if (callbackQuery.Data!.Contains("Image"))
             {
+                inputOnlineFile = new InputOnlineFile("https://www.freecatphotoapp.com/your-image.jpg");
                 await botClient.SendPhotoAsync(callbackQuery.Message!.Chat.Id,
-                                          "https://www.freecatphotoapp.com/your-image.jpg",
+                                                 inputOnlineFile,
                                           "<b>Cat</b>. <i>Source</i>: <a href=\"https://www.freecatphotoapp.com\">FreeCodeCamp</a>",
                                                  ParseMode.Html);
                 return;
@@ -52,8 +56,9 @@ namespace Telegram_bot
 
             if (callbackQuery.Data!.Contains("Document"))
             {
+                inputOnlineFile = new InputOnlineFile("https://github.com/TelegramBots/book/raw/master/src/docs/photo-ara.jpg");
                 await botClient.SendDocumentAsync(callbackQuery.Message!.Chat.Id,
-                                          "https://github.com/TelegramBots/book/raw/master/src/docs/photo-ara.jpg",
+                                                    inputOnlineFile,
                                                     caption: "<b>Ara bird</b>. <i>Source</i>: <a href=\"https://pixabay.com\">Pixabay</a>",
                                                     parseMode: ParseMode.Html);
                 return;
@@ -67,23 +72,26 @@ namespace Telegram_bot
             switch (message.Text)
             {
                 case "/start":
-                    await botClient.SendTextMessageAsync(message.Chat.Id, "Welcome aboard! Choose commands: /inline | /keyboard");
+                    await botClient.SendTextMessageAsync(message.Chat.Id, "Welcome aboard! Choose commands: /files | /weather");
                     return;
-                case "/keyboard":
+                case "/weather":
                     {
-                        ReplyKeyboardMarkup keyboard = new(new[]
-                            {
-                            new KeyboardButton[] {"Audio", "Image", "Document"},
-                            new KeyboardButton[] {"Uploaded files"}
-                        })
-                        { ResizeKeyboard = true };
+                        InlineKeyboardMarkup inlineKeyboard = new(new[]
+                        {
+                            InlineKeyboardButton.WithUrl("Magnitogorsk", "https://www.gismeteo.ru/weather-magnitogorsk-4613/"),
+                            InlineKeyboardButton.WithUrl("Chelyabinsk", "https://www.gismeteo.ru/weather-chelyabinsk-4565/"),
+                            InlineKeyboardButton.WithUrl("Yekaterinburg", "https://www.gismeteo.ru/weather-yekaterinburg-4517/")
 
-                        await botClient.SendTextMessageAsync(message.Chat.Id, "Choose", replyMarkup: keyboard);
+                        });
+
+                        await botClient.SendTextMessageAsync(message.Chat.Id,
+                                                           "Choose the city to know the weather:",
+                                                                replyMarkup: inlineKeyboard);
                         return;
                     }
-                case "/inline":
+                case "/files":
                     {
-                        InlineKeyboardMarkup keyboard = new(new[]
+                        InlineKeyboardMarkup inlineKeyboard = new(new[]
                         {
                             new[]
                             {
@@ -97,7 +105,7 @@ namespace Telegram_bot
                             }
                         });
 
-                        await botClient.SendTextMessageAsync(message.Chat.Id, "Choose inline:", replyMarkup: keyboard);
+                        await botClient.SendTextMessageAsync(message.Chat.Id, "Choose a file:", replyMarkup: inlineKeyboard);
                         return;
                     }
             }
