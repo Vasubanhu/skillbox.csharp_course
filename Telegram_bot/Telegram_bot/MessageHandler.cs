@@ -19,9 +19,9 @@ namespace Telegram_bot
     internal class MessageHandler
     {
         internal static ITelegramBotClient Bot { get; } = new TelegramBotClient(Configuration.Token);
+        private static readonly string Path = @$"C:\Users\{Environment.UserName}\Downloads\Telegram Desktop";
 
-        internal static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
-            CancellationToken cancellationToken)
+        internal static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
             WriteLine(JsonConvert.SerializeObject(update));
 
@@ -70,18 +70,15 @@ namespace Telegram_bot
 
             if (callbackQuery.Data!.Contains("List"))
             {
-                var path = @$"C:\Users\{Environment.UserName}\Downloads\Telegram Desktop";
-
-                if (Directory.Exists(path))
+                if (Directory.Exists(Path))
                 {
-                    if (Directory.GetFiles(path).Length != 0)
+                    if (Directory.GetFiles(Path).Length != 0)
                     {
-                        await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "List of downloaded files:");
+                        var files = ProcessDirectory(Path);
+                        var repM = GetInlineKeyboard(files);
 
-                        foreach (var file in ProcessDirectory(path))
-                        {
-                            await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, file);
-                        }
+                        await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id,
+                            "<i>List of downloaded files:</i>".ToUpper(), ParseMode.Html, replyMarkup: repM);
                         return;
                     }
 
@@ -89,7 +86,15 @@ namespace Telegram_bot
                     return;
                 }
 
-                await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, $"{path} is not a valid directory.");
+                await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, $"{Path} is not a valid directory.");
+                return;
+            }
+
+            if (callbackQuery.Data!.Contains('#'))
+            {
+                await using var stream = File.OpenRead(GetFile(callbackQuery.Data));
+                inputOnlineFile = new InputOnlineFile(stream);
+                await botClient.SendDocumentAsync(callbackQuery.Message!.Chat.Id, inputOnlineFile);
                 return;
             }
 
@@ -164,8 +169,33 @@ namespace Telegram_bot
 
             return Task.CompletedTask;
         }
+        // Return filename in directory
+        private static IReadOnlyList<string> ProcessDirectory(string targetDirectory)
+            => Directory.GetFiles(targetDirectory).Select(System.IO.Path.GetFileName).ToList();
+        // Transform the list of files to buttons
+        private static InlineKeyboardMarkup GetInlineKeyboard(IReadOnlyList<string> list)
+        {
+            var keyboardInline = new InlineKeyboardButton[list.Count][];
+            var keyboardButtons = new InlineKeyboardButton[list.Count];
 
-        private static List<string> ProcessDirectory(string targetDirectory)
-            => Directory.GetFiles(targetDirectory).Select(Path.GetFileName).ToList();
+            for (var i = 0; i < list.Count; i++)
+            {
+                keyboardButtons[i] = new InlineKeyboardButton(string.Empty)
+                {
+                    Text = list[i],
+                    CallbackData = $"#{list[i]}"
+                };
+            }
+
+            for (var j = 1; j <= list.Count; j++)
+            {
+                keyboardInline[j - 1] = keyboardButtons.Take(1).ToArray();
+                keyboardButtons = keyboardButtons.Skip(1).ToArray();
+            }
+
+            return keyboardInline;
+        }
+
+        public static string GetFile(string fileName) => @$"{Path}\{fileName.Trim('#')}";
     }
 }
