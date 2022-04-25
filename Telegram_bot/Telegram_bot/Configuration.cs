@@ -2,6 +2,7 @@
 {
     internal static class Configuration
     {
-        public static readonly string Token = "";
+        internal static readonly string TelegramToken = "";
+        internal static readonly string OpenWeatherToken = "";
     }
 }

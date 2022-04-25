@@ -16,9 +16,9 @@ using File = System.IO.File;
 
 namespace Telegram_bot
 {
-    internal class MessageHandler
+    internal class MessageController
     {
-        internal static ITelegramBotClient Bot { get; } = new TelegramBotClient(Configuration.Token);
+        internal static ITelegramBotClient Bot { get; } = new TelegramBotClient(Configuration.TelegramToken);
         private static readonly string Path = @$"C:\Users\{Environment.UserName}\Downloads\Telegram Desktop";
 
         internal static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
