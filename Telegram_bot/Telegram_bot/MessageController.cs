@@ -20,10 +20,13 @@ namespace Telegram_bot
     {
         internal static ITelegramBotClient Bot { get; } = new TelegramBotClient(Configuration.TelegramToken);
         private static readonly string Path = @$"C:\Users\{Environment.UserName}\Downloads\Telegram Desktop";
+        private static string _json = string.Empty;
 
         internal static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
-            WriteLine(JsonConvert.SerializeObject(update));
+            // Log to console
+            _json = JsonConvert.SerializeObject(update);
+            WriteLine(_json);
 
             switch (update.Type)
             {
@@ -38,8 +41,9 @@ namespace Telegram_bot
 
         private static async Task HandleCallbackQuery(ITelegramBotClient botClient, CallbackQuery callbackQuery)
         {
+            // Files
             InputOnlineFile inputOnlineFile;
-
+            
             if (callbackQuery.Data!.Contains("Audio"))
             {
                 await using var stream = File.OpenRead("src_docs_voice-nfl_commentary.ogg");
@@ -90,7 +94,7 @@ namespace Telegram_bot
                 return;
             }
 
-            if (callbackQuery.Data!.Contains('#'))
+            if (callbackQuery.Data!.StartsWith('#'))
             {
                 await using var stream = File.OpenRead(GetFile(callbackQuery.Data));
                 inputOnlineFile = new InputOnlineFile(stream);
@@ -98,8 +102,33 @@ namespace Telegram_bot
                 return;
             }
 
+            // Weather
+            if (callbackQuery.Data!.Contains(Cities.Magnitogorsk))
+            {
+
+                var summary = WeatherController.GetInfoFrom(Cities.Magnitogorsk);
+                await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, summary.Result);
+                return;
+            }
+
+            if (callbackQuery.Data!.Contains(Cities.Chelyabinsk))
+            {
+
+                var summary = WeatherController.GetInfoFrom(Cities.Chelyabinsk);
+                await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, summary.Result);
+                return;
+            }
+
+            if (callbackQuery.Data!.Contains(Cities.Yekaterinburg))
+            {
+
+                var summary = WeatherController.GetInfoFrom(Cities.Yekaterinburg);
+                await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, summary.Result);
+                return;
+            }
+
             await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id,
-                $"You choose with data: {callbackQuery.Data}");
+            $"You choose with data: {callbackQuery.Data}");
         }
 
         private static async Task HandleMessage(ITelegramBotClient botClient, Message message)
@@ -114,14 +143,13 @@ namespace Telegram_bot
                     {
                         InlineKeyboardMarkup inlineKeyboard = new(new[]
                         {
-                        InlineKeyboardButton.WithUrl("Magnitogorsk",
-                            "https://www.gismeteo.ru/weather-magnitogorsk-4613/"),
-                        InlineKeyboardButton.WithUrl("Chelyabinsk",
-                            "https://www.gismeteo.ru/weather-chelyabinsk-4565/"),
-                        InlineKeyboardButton.WithUrl("Yekaterinburg",
-                            "https://www.gismeteo.ru/weather-yekaterinburg-4517/")
-
-                    });
+                            new[]
+                            {
+                                InlineKeyboardButton.WithCallbackData( Cities.Magnitogorsk,  Cities.Magnitogorsk),
+                                InlineKeyboardButton.WithCallbackData(Cities.Chelyabinsk, Cities.Chelyabinsk),
+                                InlineKeyboardButton.WithCallbackData(Cities.Yekaterinburg, Cities.Yekaterinburg)
+                            }
+                        });
 
                         await botClient.SendTextMessageAsync(message.Chat.Id,
                             "Choose the city to know the weather:",
@@ -160,8 +188,6 @@ namespace Telegram_bot
             {
                 ApiRequestException apiRequestException =>
                     $"Telegram's API exception: \n{apiRequestException.ErrorCode}\n{apiRequestException.Message}",
-                JsonSerializationException jsonException =>
-                    $"JSON serialization exception \n{jsonException.LineNumber}\n{jsonException.LinePosition}\n{jsonException.Message}",
                 _ => exception.ToString()
             };
 

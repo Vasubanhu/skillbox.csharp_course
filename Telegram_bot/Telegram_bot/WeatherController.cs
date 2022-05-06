@@ -1,34 +1,31 @@
-﻿using System;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using Newtonsoft.Json;
+﻿using System.Net.Http;
+using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace Telegram_bot
 {
     internal class WeatherController
     {
-        public static async void GetInfoFrom(string city)
+        public static async Task<string> GetInfoFrom(string city)
         {
-            try
-            {
-                var url = @$"https://api.openweathermap.org/data/2.5/weather?q={city}&&lang=ru&appid={Configuration.OpenWeatherToken}";
-                var client = new HttpClient();
+            // Wrap in method
+            var url = @$"https://api.openweathermap.org/data/2.5/weather?q={city}&&lang=ru&appid={Configuration.OpenWeatherToken}";
+            var client = new HttpClient();
+            const float offset = 273f;
+            const string degreeCelsius = "\u00B0C";
 
-                var httpResponse = await client.GetAsync(url);
-                var responseBody = await httpResponse.Content.ReadAsStringAsync();
-                var data = JsonConvert.DeserializeObject<WeatherData>(responseBody);
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            var response = await client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
 
-                var _ = data?.Main.FirstOrDefault(r => r.Key == "temp").Value;
+            var body = await response.Content.ReadAsStringAsync();
+            var node = JObject.Parse(body);
 
-                Console.WriteLine(_);
+            var temperature = (float)node["main"]?["temp"] - offset;
+            var weatherDescription = (string)node["weather"]?[0]?["description"];
+            var windSpeed = (string)node["wind"]?["speed"];
 
-            }
-            catch (WebException exception)
-            {
-                Console.WriteLine(exception.Message);
-            }
+            return $"{city}:\n{temperature:F1}{degreeCelsius}, {weatherDescription}, cкорость ветра - {windSpeed} м/c.";
         }
-
     }
 }
