@@ -19,7 +19,7 @@ namespace Telegram_bot
     internal class MessageController
     {
         internal static ITelegramBotClient Bot { get; } = new TelegramBotClient(Configuration.TelegramToken);
-        private static readonly string Path = @$"C:\Users\{Environment.UserName}\Downloads\Telegram Desktop";
+        private static readonly string Path = PathFinder.SetPath();
         private static string _json = string.Empty;
 
         internal static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
@@ -43,7 +43,7 @@ namespace Telegram_bot
         {
             // Files
             InputOnlineFile inputOnlineFile;
-            
+
             if (callbackQuery.Data!.Contains("Audio"))
             {
                 await using var stream = File.OpenRead("src_docs_voice-nfl_commentary.ogg");
@@ -74,19 +74,13 @@ namespace Telegram_bot
 
             if (callbackQuery.Data!.Contains("List"))
             {
-                if (Directory.Exists(Path))
+                if (Directory.GetFiles(Path).Length != 0)
                 {
-                    if (Directory.GetFiles(Path).Length != 0)
-                    {
-                        var files = ProcessDirectory(Path);
-                        var repM = GetInlineKeyboard(files);
+                    var files = ProcessDirectory(Path);
+                    var repM = GetInlineKeyboard(files);
 
-                        await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id,
-                            "<i>List of downloaded files:</i>".ToUpper(), ParseMode.Html, replyMarkup: repM);
-                        return;
-                    }
-
-                    await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id, "Directory has not files.");
+                    await botClient.SendTextMessageAsync(callbackQuery.Message!.Chat.Id,
+                        "<i>List of downloaded files:</i>".ToUpper(), ParseMode.Html, replyMarkup: repM);
                     return;
                 }
 
@@ -145,7 +139,7 @@ namespace Telegram_bot
                         {
                             new[]
                             {
-                                InlineKeyboardButton.WithCallbackData( Cities.Magnitogorsk,  Cities.Magnitogorsk),
+                                InlineKeyboardButton.WithCallbackData(Cities.Magnitogorsk, Cities.Magnitogorsk),
                                 InlineKeyboardButton.WithCallbackData(Cities.Chelyabinsk, Cities.Chelyabinsk),
                                 InlineKeyboardButton.WithCallbackData(Cities.Yekaterinburg, Cities.Yekaterinburg)
                             }
