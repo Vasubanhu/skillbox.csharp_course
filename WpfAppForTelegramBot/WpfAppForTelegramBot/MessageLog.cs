@@ -1,6 +1,6 @@
 ﻿namespace WpfAppForTelegramBot
 {
-    struct MessageLog
+    internal struct MessageLog
     {
         public string Time { get; set; }
         public long Id { get; set; }
