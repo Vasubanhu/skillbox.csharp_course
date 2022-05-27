@@ -17,7 +17,7 @@ namespace WpfAppForTelegramBot
         //private TelegramBotClient _bot;
         public static ObservableCollection<MessageLog> BotMessageLog { get; set; }
 
-        internal static ITelegramBotClient Bot { get; } = new TelegramBotClient("5031242663:AAFCwwmC0ih-9Xhzh70bzgOitny5o1DkxMk");
+        internal static ITelegramBotClient Bot { get; } = new TelegramBotClient("token");
 
         internal static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
